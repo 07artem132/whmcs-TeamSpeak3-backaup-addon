@@ -1,11 +1,18 @@
 # whmcs-TeamSpeak3-backaup-addon (FTP)
-Файлы разместить в папке \billing.dev.service-voice.com\modules\addons 
-billing.dev.service-voice.com - корень whmcs
+Файлы разместить в папке \whmcsRoot\modules\addons 
+whmcsRoot - корень whmcs
 ## Крон
-  0  */6  *  *  * root php -q /var/www/billing.dev.service-voice.com/modules/addons/TeamSpeakBackaup/cron.php <br>
-  0  0  *  *  *   root php -q /var/www/billing.dev.service-voice.com/modules/addons/TeamSpeakBackaup/cron.php --icon
+При большом кол-ве серверов рекомендуется разбить крон на 2 файла <br/>
+Первый файл - создание бекапов <br/>
+Второй файл - удаление старых бекапов <br/>
 
-Первая строка говорит о том что нужно бекапить только "снапшоты" <br/>
-Вторая строка говорит о том что нужно бекапить снапшоты+иконки
+Пример первого файла - ExampleCronBackupCreate.php
+Пример второго файла - ExampleCronOldBackupDelete.php
 ## Доп информация
-Резервное копирование файлов реализовано НЕ будет в виду высокой нагрузки при выполнении этого процесса.
+Резервное копирование файлов (не иконок а именно файлов) реализовано НЕ будет в виду высокой нагрузки при выполнении этого процесса.
+
+# Внимание
+Данный модуль не зависит от модуля TeamSpeak 3 <br/>
+Однако зависит от TeamSpeak 3 фреймворка который должен использовать ваш модуль <br/>
+Так как функции данного модуля принимают экземпляр обьекта TeamSpeak3_Node_Server
+Ссылка на фреймворк - https://docs.planetteamspeak.com/ts3/php/framework/index.html <br/>

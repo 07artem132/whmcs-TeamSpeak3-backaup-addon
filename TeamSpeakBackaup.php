@@ -6,70 +6,44 @@
  * Time: 12:29
  */
 
-use TeamSpeakBackaup\lib\Config;
-use TeamSpeakBackaup\lib\FileManager;
-use TeamSpeakBackaup\lib\Log;
-use phpseclib\Net\SFTP;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Configs\ModuleConfig;
 
-require __DIR__ . '/vendor/autoload.php';
 
 function TeamSpeakBackaup_config() {
 	$configarray = [
 		"name"        => "TeamSpeak backaup FTP",
 		"description" => "",
-		"version"     => "1",
+		"version"     => "2",
 		"author"      => "service-voice",
 		"fields"      => [
-			'ip'         => array(
-				'Type'         => 'text',
-				'Size'         => '30',
-				'Default'      => '',
-				'Description'  => '',
-				'FriendlyName' => 'ip'
-			),
-			"type"       => [
-				"FriendlyName" => "Тип соединения",
-				"Type"         => "dropdown",
-				"Options"      => "sftp",
-				"Description"  => "",
-				"Default"      => "sftp",
-			],
-			'login'      => array(
-				'Type'         => 'text',
-				'Size'         => '30',
-				'Default'      => '',
-				'Description'  => '',
-				'FriendlyName' => 'Логин'
-			),
-			'password'   => array(
-				'Type'         => 'password',
-				'Size'         => '30',
-				'Default'      => '',
-				'Description'  => '',
-				'FriendlyName' => 'Пароль'
-			),
-			'path'       => array(
-				'Type'         => 'text',
-				'Size'         => '30',
-				'Default'      => '/root/',
-				'Description'  => 'Обязательно со слешом на конце, папка должна сушествовать.',
-				'FriendlyName' => 'Путь для сохранения бекапов'
-			),
-			"compressed" => [
-				"FriendlyName" => "Тип сжатия",
-				"Type"         => "dropdown",
-				"Options"      =>".zip" ,
-				"Description"  => "",
-				"Default"      => ".zip",
-			],
-			"DeleteFor"  => [
-				"FriendlyName" => "Сколько дней хранить резервные копии ?",
-				"Type"         => "text",
-				'Size'         => '30',
-				"Description"  => "Вводить только цифры",
-				"Default"      => "7",
-			]
-
+            'note1' => [
+                "FriendlyName" => "Данные для выгрузки",
+            ],
+            "FtpIp" => [
+                "FriendlyName" => "IP FTP сервера",
+                "Type" => "text",
+                "Description" => "",
+            ],
+            "FtpPort" => [
+                "FriendlyName" => "Порт FTP сервера",
+                "Type" => "text",
+                "Description" => "",
+            ],
+            "FtpLogin" => [
+                "FriendlyName" => "Логин FTP сервера",
+                "Type" => "text",
+                "Description" => "",
+            ],
+            "FtpPassword" => [
+                "FriendlyName" => "Пароль FTP сервера",
+                "Type" => "password",
+                "Description" => "",
+            ],
+            "FtpPath" => [
+                "FriendlyName" => "Путь на FTP сервере для бекапов",
+                "Type" => "text",
+                "Description" => "",
+            ]
 		]
 	];
 
@@ -77,7 +51,7 @@ function TeamSpeakBackaup_config() {
 }
 
 function TeamSpeakBackaup_output( $var ) {
-	$config = new Config();
+	/*$config = new Config();
 	$sftp   = new SFTP( $config['ip'] );
 	if ( ! $sftp->login( $config['login'], $config['password'] ) ) {
 		exit( 'Login Failed' );
@@ -110,5 +84,5 @@ function TeamSpeakBackaup_output( $var ) {
 		} else {
 			echo '<a href="addonmodules.php?module=TeamSpeakBackaup&path=' . base64_encode( $config['path'] . $path . '/' ) . '">' . $path . '<a><br/>';
 		}
-	}
+	}*/
 }
