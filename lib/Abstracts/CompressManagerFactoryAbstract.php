@@ -9,18 +9,16 @@
 namespace WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts;
 
 use WHMCS\Module\Addon\TeamSpeakBackaup\Configs\ModuleConfig;
-use WHMCS\Module\Addon\TeamSpeakBackaup\Controllers\CompressBzip2Controller;
-use WHMCS\Module\Addon\TeamSpeakBackaup\Controllers\CompressGzipController;
-use WHMCS\Module\Addon\TeamSpeakBackaup\Controllers\CompressNoneController;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Interfaces\CompressInterface;
 
 abstract class CompressManagerFactoryAbstract
 {
     /**
      * @param string $c
-     * @return CompressBzip2Controller|CompressGzipController|CompressNoneController
+     * @return CompressInterface
      * @throws  \Exception
      */
-    public static function create($c)
+    public static function create($c): CompressInterface
     {
         $c = ucfirst(strtolower($c));
         if (!CompressMethodAbstract::isValid($c)) {

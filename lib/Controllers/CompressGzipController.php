@@ -9,8 +9,9 @@
 namespace WHMCS\Module\Addon\TeamSpeakBackaup\Controllers;
 
 use WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts\CompressManagerFactoryAbstract;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Interfaces\CompressInterface;
 
-class CompressGzipController extends CompressManagerFactoryAbstract
+class CompressGzipController extends CompressManagerFactoryAbstract implements CompressInterface
 {
     private $fileHandler = null;
 
@@ -25,9 +26,23 @@ class CompressGzipController extends CompressManagerFactoryAbstract
         }
     }
 
-    public static function compressString(string $data, int $level): string
+    /**
+     * @param string $data
+     * @param int $level
+     * @return string
+     */
+    public function compressString(string $data, int $level = 9): string
     {
         return gzencode($data, $level);
+    }
+
+    /**
+     * @param string $data
+     * @return string
+     */
+    public function decompressString(string $data): string
+    {
+        return gzdecode($data);
     }
 
     /**
@@ -66,5 +81,14 @@ class CompressGzipController extends CompressManagerFactoryAbstract
     {
         return gzclose($this->fileHandler);
     }
+
+    /**
+     * @return string
+     */
+    function getFileExtension(): string
+    {
+        return 'gz';
+    }
+
 }
 

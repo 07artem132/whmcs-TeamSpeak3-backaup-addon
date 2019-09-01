@@ -8,9 +8,12 @@
 
 namespace WHMCS\Module\Addon\TeamSpeakBackaup\Controllers;
 
+use WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts\CompressManagerFactoryAbstract;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts\CompressMethodAbstract;
 use WHMCS\Module\Addon\TeamSpeakBackaup\Exceptions\FtpException;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Exception;
 
 class StorageController
 {
@@ -106,46 +109,94 @@ class StorageController
     /**
      * @param string $uid
      * @param string $backup
-     * @param string $prefix
+     * @param string $tag
      * @param int $keepDays
+     * @param string $compressMethod
      * @param int $deps
      * @throws FtpException
+     * @throws Exception
      */
-    public function putBackup(string $uid, string $backup, string $prefix, int $keepDays, int $deps = 10): void
+    public function putBackup(string $uid, string $backup, string $tag, int $keepDays, string $compressMethod, int $deps = 10): void
     {
-        $path = '/backups/' . base64_encode($uid) . '/' . $prefix;
+        $path = '/backups/' . base64_encode($uid) . '/' . $tag;
         $date = date('Y-m-d_H-i');
+        $compressManager = CompressManagerFactoryAbstract::create($compressMethod);
 
         if (!$this->ftp->isDir($path)) {
             $this->ftp->mkdir($path, true);
         }
 
         try {
-            $this->ftp->putFromString($path . '/' . $date . '.json.gz', $backup);
+            $this->ftp->putFromString(
+                $path . '/' . $date . '.json.' . $compressManager->getFileExtension(),
+                $compressManager->compressString($backup)
+            );
             $this->ftp->putFromString($path . '/' . $date . '.json.keep', $keepDays);
         } catch (FtpException $e) {
             echo 'error->' . $e->getMessage() . PHP_EOL;
             if ($deps-- == 0)
                 throw $e;
             $this->reconnect(10);
-            $this->putBackup($uid, $backup, $prefix, $keepDays, $deps);
+            $this->putBackup($uid, $backup, $tag, $keepDays, $deps);
         }
     }
 
-    public function getBackup($uid, $backup): string
+    /**
+     * @param string $uid
+     * @param string $tag
+     * @param string $backupDate
+     * @param int $deps
+     * @return string
+     * @throws Exception
+     */
+    public function getBackup(string $uid, string $tag, string $backupDate, int $deps = 10): string
     {
-    }
-
-    public function getIcon(int $crc32, int $deps = 10): string
-    {
+        $path = '/backups/' . base64_encode($uid) . '/' . $tag . '/';
         try {
-            return $this->ftp->getContent('/icons/' . crc32($crc32));
-        } catch (FtpException $e) {
+            $fileList = collect($this->ftp->nlist($path));
+
+            $fileList = $fileList->filter(function ($fileName) use ($backupDate) {
+                return strpos($fileName, $backupDate) !== false
+                    && strpos($fileName, 'keep') == false;
+            });
+
+            $fileExtension = pathinfo($fileList->first(), PATHINFO_EXTENSION);
+
+            $backup = $this->ftp->getContent($fileList->first());
+
+            if (CompressMethodAbstract::isValidExtension($fileExtension)) {
+                $compressManager = CompressManagerFactoryAbstract::create(
+                    CompressMethodAbstract::getMethodForExtension($fileExtension)
+                );
+                $backup = $compressManager->decompressString($backup);
+            }
+
+            return $backup;
+        } catch (Exception $e) {
             echo 'error->' . $e->getMessage() . PHP_EOL;
             if ($deps-- == 0)
                 throw $e;
             $this->reconnect(10);
-            $this->getIcon($crc32, $deps);
+            return $this->getBackup($uid, $tag, $backupDate, $deps);
+        }
+    }
+
+    /**
+     * @param int $crc32
+     * @param int $deps
+     * @return string
+     * @throws Exception
+     */
+    public function getIcon(int $crc32, int $deps = 10): string
+    {
+        try {
+            return $this->ftp->getContent('/icons/' . $crc32);
+        } catch (Exception $e) {
+            echo 'error->' . $e->getMessage() . PHP_EOL;
+            if ($deps-- == 0)
+                throw $e;
+            $this->reconnect(10);
+            return $this->getIcon($crc32, $deps);
         }
     }
 
@@ -200,26 +251,40 @@ class StorageController
         });
     }
 
-    public function getExpireBackupInfo(string $uid, string $tag, string $backupDate, $deps = 10): Carbon
+    /**
+     * @param string $uid
+     * @param string $tag
+     * @param string $backupDate
+     * @param int $deps
+     * @return Carbon
+     * @throws FtpException
+     * @throws Exception
+     */
+    public function getExpireBackupInfo(string $uid, string $tag, string $backupDate, int $deps = 10): Carbon
     {
         try {
             $path = '/backups/' . base64_encode($uid) . '/' . $tag . '/' . $backupDate . '.json.keep';
 
             $keepDay = (int)$this->ftp->getContent($path);
 
-            $expire_at = Carbon::createFromFormat('Y-m-d_H-i', $backupDate)->addDays($keepDay);
+            return Carbon::createFromFormat('Y-m-d_H-i', $backupDate)->addDays($keepDay);
         } catch (\Exception $e) {
             echo 'error->' . $e->getMessage() . PHP_EOL;
             if ($deps-- == 0)
                 throw $e;
             $this->reconnect(10);
-            $this->getExpireBackupInfo($uid, $tag, $backupDate, $deps);
+            return $this->getExpireBackupInfo($uid, $tag, $backupDate, $deps);
         }
-
-        return $expire_at;
     }
 
-
+    /**
+     * @param string $uid
+     * @param string $tag
+     * @param string $backupDate
+     * @param int $deps
+     * @throws FtpException
+     * @throws Exception
+     */
     public function deleteBackup(string $uid, string $tag, string $backupDate, $deps = 10): void
     {
         try {
@@ -228,7 +293,7 @@ class StorageController
 
             $this->ftp->delete($pathKeep);
             $this->ftp->delete($pathBackup);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo 'error->' . $e->getMessage() . PHP_EOL;
             if ($deps-- == 0)
                 throw $e;

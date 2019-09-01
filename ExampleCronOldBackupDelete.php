@@ -32,9 +32,11 @@ foreach ($listIDInstances as $id) {
                 echo 'remove old backup done->' . (string)$server->virtualserver_unique_identifier . PHP_EOL;
             } catch (\Throwable $e) {
                 echo $e->getMessage();
+                echo $e->getTraceAsString();
             }
         }
     } catch (\Throwable $e) {
         echo 'error->' . $e->getMessage();
+        echo $e->getTraceAsString();
     }
 }

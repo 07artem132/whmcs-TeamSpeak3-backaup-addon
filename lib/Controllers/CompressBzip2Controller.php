@@ -9,8 +9,9 @@
 namespace WHMCS\Module\Addon\TeamSpeakBackaup\Controllers;
 
 use WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts\CompressManagerFactoryAbstract;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Interfaces\CompressInterface;
 
-class CompressBzip2Controller extends CompressManagerFactoryAbstract
+class CompressBzip2Controller extends CompressManagerFactoryAbstract implements CompressInterface
 {
     private $fileHandler = null;
 
@@ -26,10 +27,29 @@ class CompressBzip2Controller extends CompressManagerFactoryAbstract
     }
 
     /**
+     * @param string $data
+     * @param int $level
+     * @return string
+     */
+    public function compressString(string $data, int $level = 9): string
+    {
+        return bzcompress($data, $level);
+    }
+
+    /**
+     * @param string $data
+     * @return string
+     */
+    public function decompressString(string $data): string
+    {
+        return bzdecompress($data);
+    }
+
+    /**
      * @param string $filename
      * @param string $mode
-     * @throws \Exception
      * @return boolean
+     * @throws \Exception
      */
     public function open($filename, $mode = 'w')
     {
@@ -60,5 +80,13 @@ class CompressBzip2Controller extends CompressManagerFactoryAbstract
     public function close()
     {
         return bzclose($this->fileHandler);
+    }
+
+    /**
+     * @return string
+     */
+    function getFileExtension(): string
+    {
+        return 'bz2';
     }
 }

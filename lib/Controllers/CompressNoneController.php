@@ -9,16 +9,17 @@
 namespace WHMCS\Module\Addon\TeamSpeakBackaup\Controllers;
 
 use WHMCS\Module\Addon\TeamSpeakBackaup\Abstracts\CompressManagerFactoryAbstract;
+use WHMCS\Module\Addon\TeamSpeakBackaup\Interfaces\CompressInterface;
 
-class CompressNoneController extends CompressManagerFactoryAbstract
+class CompressNoneController extends CompressManagerFactoryAbstract implements CompressInterface
 {
     private $fileHandler = null;
 
     /**
      * @param string $filename
      * @param string $mode
-     * @throws \Exception
      * @return boolean
+     * @throws \Exception
      */
     public function open($filename, $mode = 'wb')
     {
@@ -28,6 +29,25 @@ class CompressNoneController extends CompressManagerFactoryAbstract
         }
 
         return true;
+    }
+
+    /**
+     * @param string $data
+     * @param int $level
+     * @return string
+     */
+    public function compressString(string $data, int $level = 9): string
+    {
+        return $data;
+    }
+
+    /**
+     * @param string $data
+     * @return string
+     */
+    public function decompressString(string $data): string
+    {
+        return $data;
     }
 
     /**
@@ -50,4 +70,13 @@ class CompressNoneController extends CompressManagerFactoryAbstract
     {
         return fclose($this->fileHandler);
     }
+
+    /**
+     * @return string
+     */
+    function getFileExtension(): string
+    {
+        return '';
+    }
+
 }
